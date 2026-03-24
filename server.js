@@ -1,58 +1,96 @@
-const express = require("express")
-const cors = require("cors")
-const mongoose = require("mongoose")
-const path = require("path")
+const express = require("express");
+const cors = require("cors");
 
-const app = express()
+const app = express();
 
-// Middleware
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 
-// Serve frontend
-app.use(express.static(path.join(__dirname, "../frontend/public")))
+// ================= USERS =================
+let users = [];
 
-// MongoDB connection
-mongoose.connect("mongodb://127.0.0.1:27017/phonestore")
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err))
-
-// User Schema
-const UserSchema = new mongoose.Schema({
-  username: String,
-  password: String
-})
-
-const User = mongoose.model("User", UserSchema)
-
-// REGISTER
-app.post("/register", async (req, res) => {
-  try {
-    const { username, password } = req.body
-
-    const newUser = new User({ username, password })
-    await newUser.save()
-
-    res.json({ success: true })
-  } catch (err) {
-    res.status(500).json({ error: err.message })
+// ================= PRODUCTS =================
+const products = [
+  {
+    id: 1,
+    name: "iPhone 14",
+    price: 70000,
+    image: "https://m.media-amazon.com/images/I/61cwywLZR-L._SX679_.jpg"
+  },
+  {
+    id: 2,
+    name: "Samsung Galaxy S23",
+    price: 65000,
+    image: "https://m.media-amazon.com/images/I/61VfL-aiToL._SX679_.jpg"
+  },
+  {
+    id: 3,
+    name: "OnePlus 11",
+    price: 60000,
+    image: "https://m.media-amazon.com/images/I/61amb0CfMGL._SX679_.jpg"
+  },
+  {
+    id: 4,
+    name: "Redmi Note 12",
+    price: 20000,
+    image: "https://m.media-amazon.com/images/I/81gUO0M9XEL._SX679_.jpg"
+  },
+  {
+    id: 5,
+    name: "Realme GT",
+    price: 25000,
+    image: "https://m.media-amazon.com/images/I/71cT1N7R8hL._SX679_.jpg"
   }
-})
+];
 
-// LOGIN
-app.post("/login", async (req, res) => {
-  const { username, password } = req.body
+// ================= ROUTES =================
 
-  const user = await User.findOne({ username, password })
+// Test
+app.get("/", (req, res) => {
+  res.send("🔥 Backend working");
+});
 
-  if (user) {
-    res.json({ success: true })
-  } else {
-    res.json({ success: false })
+// Products
+app.get("/products", (req, res) => {
+  res.json(products);
+});
+
+// Register
+app.post("/register", (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ message: "Enter all fields" });
   }
-})
 
-// Start server
+  const exists = users.find(u => u.username === username);
+  if (exists) {
+    return res.status(400).json({ message: "User already exists" });
+  }
+
+  users.push({ username, password });
+
+  res.json({ message: "Registered successfully" });
+});
+
+// Login
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  const user = users.find(u => u.username === username);
+
+  if (!user) {
+    return res.status(400).json({ message: "User not found" });
+  }
+
+  if (user.password !== password) {
+    return res.status(400).json({ message: "Wrong password" });
+  }
+
+  res.json({ message: "Login successful" });
+});
+
+// Start
 app.listen(3000, () => {
-  console.log("Server running on port 3000")
-})
+  console.log("🚀 Server running on http://localhost:3000");
+});
